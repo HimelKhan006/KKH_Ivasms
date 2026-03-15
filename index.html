@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Lock UI zoom but allow internal engine zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IVA Engine - High Performance Browsing</title>
+    
+    <!-- ENGINE PRE-OPTIMIZATION -->
+    <link rel="preconnect" href="https://www.ivasms.com">
+    <link rel="dns-prefetch" href="https://www.ivasms.com">
+    <link rel="prerender" href="https://www.ivasms.com/portal">
+
+    <style>
+        /* 1. CORE ENGINE LAYOUT */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body, html { 
+            height: 100%; width: 100%; overflow: hidden; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; flex-direction: column;
+            background: #020617; /* Deepest black/blue for premium feel */
+        }
+
+        /* 2. CENTERED CONTROL BARS */
+        .nav-bar {
+            background: #0f172a;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .top-nav { border-bottom: 1px solid #1e293b; }
+        .bottom-nav { border-top: 1px solid #1e293b; padding-bottom: env(safe-area-inset-bottom, 12px); }
+
+        /* 3. BUTTONS (Uniform & High-Performance) */
+        .btn {
+            color: white; border: none;
+            padding: 10px 16px; min-width: 120px;
+            border-radius: 6px; cursor: pointer;
+            font-size: 12px; font-weight: 700;
+            display: inline-flex; justify-content: center; align-items: center;
+            gap: 6px; text-transform: uppercase;
+            transition: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #334155; /* Neutral Slate */
+        }
+        .btn:active { transform: scale(0.92); opacity: 0.7; }
+
+        /* Browser Nav Buttons (History) */
+        .btn-nav { min-width: 60px; background: #475569; font-size: 18px; }
+        
+        /* Action Buttons */
+        .btn-dash    { background: #2563eb; }
+        .btn-refresh { background: #f59e0b; }
+        .btn-live    { background: #ef4444; }
+        .btn-received { background: #8b5cf6; }
+        .btn-ws      { background: #16a34a; }
+        .btn-fb      { background: #0866ff; }
+
+        /* 4. REAL-TIME PROGRESS BAR (Like Safari/Chrome) */
+        #progress-container {
+            width: 100%; height: 3px; background: transparent; position: relative; z-index: 1001;
+        }
+        #progress-bar {
+            width: 0%; height: 100%; background: #3b82f6;
+            transition: width 0.3s ease; box-shadow: 0 0 10px #3b82f6;
+        }
+
+        /* 5. ISOLATED ZOOMABLE ENGINE DISPLAY */
+        #viewport {
+            flex-grow: 1; position: relative; width: 100%;
+            background: #fff; overflow: auto; touch-action: none;
+        }
+
+        #app-frame {
+            width: 100%; height: 100%; border: none;
+            display: block; transform-origin: 0 0;
+            opacity: 0; transition: opacity 0.3s ease;
+            will-change: transform;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP: Centered Admin & Browser Controls -->
+    <header class="nav-bar top-nav">
+        <!-- History Engine Buttons -->
+        <button class="btn btn-nav" onclick="history.back()">←</button>
+        <button class="btn btn-nav" onclick="history.forward()">→</button>
+        
+        <button class="btn btn-dash" onclick="load('https://www.ivasms.com')">🏠 Dashboard</button>
+        <button class="btn btn-refresh" onclick="reloadFrame()">↻ Refresh</button>
+        
+        <button class="btn" onclick="load('https://www.ivasms.com/portal/numbers/test')">➕ Add No.</button>
+        <button class="btn" onclick="load('https://www.ivasms.com/portal/numbers')">❌ Remove No.</button>
+    </header>
+
+    <!-- Progress Engine Bar -->
+    <div id="progress-container"><div id="progress-bar"></div></div>
+
+    <!-- MIDDLE: The Real-Time Browsing Display -->
+    <main id="viewport">
+        <iframe 
+            id="app-frame" 
+            src="https://www.ivasms.com" 
+            onload="onFrameFinish()"
+            allow="clipboard-write; geolocation">
+        </iframe>
+    </main>
+
+    <!-- BOTTOM: Centered SMS Engine Tools -->
+    <footer class="nav-bar bottom-nav">
+        <button class="btn btn-live" onclick="load('https://www.ivasms.com/portal/live/my_sms')">📡 Live SMS</button>
+        <button class="btn btn-received" onclick="load('https://www.ivasms.com/portal/sms/received')">📩 Received</button>
+        <button class="btn btn-ws" onclick="load('https://www.ivasms.com/portal/sms/test/sms?app=WhatsApp')">💬 WS Range</button>
+        <button class="btn btn-fb" onclick="load('https://www.ivasms.com/portal/sms/test/sms?app=Facebook')">📱 FB Range</button>
+    </footer>
+
+    <script>
+        const frame = document.getElementById('app-frame');
+        const progressBar = document.getElementById('progress-bar');
+        const viewport = document.getElementById('viewport');
+
+        // --- BROWSER ENGINE SIMULATION ---
+
+        function load(url) {
+            startProgress();
+            frame.style.opacity = '0';
+            frame.src = url;
+        }
+
+        function reloadFrame() {
+            startProgress();
+            frame.style.opacity = '0';
+            const url = frame.src;
+            frame.src = '';
+            setTimeout(() => { frame.src = url; }, 50);
+        }
+
+        // Progress Bar Logic
+        let progressInterval;
+        function startProgress() {
+            clearInterval(progressInterval);
+            progressBar.style.width = '0%';
+            let width = 0;
+            progressInterval = setInterval(() => {
+                if (width >= 90) {
+                    clearInterval(progressInterval);
+                } else {
+                    width += Math.random() * 10;
+                    progressBar.style.width = width + '%';
+                }
+            }, 150);
+        }
+
+        function onFrameFinish() {
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            setTimeout(() => { 
+                progressBar.style.width = '0%'; 
+                frame.style.opacity = '1';
+            }, 300);
+        }
+
+        // --- ISOLATED PINCH-ZOOM ENGINE ---
+        let scale = 1;
+        let startDist = 0;
+        let currentScale = 1;
+
+        viewport.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                startDist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            }
+        });
+
+        viewport.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && startDist > 0) {
+                e.preventDefault();
+                const dist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                const zoom = (dist / startDist) * currentScale;
+                scale = Math.min(Math.max(1, zoom), 4); // Limit 1x to 4x
+                applyZoom(scale);
+            }
+        }, { passive: false });
+
+        viewport.addEventListener('touchend', () => {
+            currentScale = scale;
+        });
+
+        function applyZoom(z) {
+            frame.style.transform = `scale(${z})`;
+            frame.style.width = (100 / z) + "%";
+            frame.style.height = (100 / z) + "%";
+            viewport.style.overflow = (z > 1) ? "auto" : "hidden";
+        }
+
+        // Mouse Wheel Zoom (Ctrl + Scroll)
+        viewport.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                scale = Math.min(Math.max(1, scale + (e.deltaY < 0 ? 0.1 : -0.1)), 4);
+                applyZoom(scale);
+                currentScale = scale;
+            }
+        }, { passive: false });
+
+    </script>
+
+</body>
+</html>
